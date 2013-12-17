@@ -81,7 +81,8 @@ static BeaconManager *_inst;
         _region = [[CLBeaconRegion alloc]
                    initWithProximityUUID:[[NSUUID alloc] initWithUUIDString:kDefaultUUIDString]
                    identifier:@"com.reinforce-lab.iBeaconMonitor"];
-
+        _region.notifyEntryStateOnDisplay = YES;
+        
         _manager = [[CLLocationManager alloc] init];
         _manager.delegate = self;
     }
@@ -89,6 +90,8 @@ static BeaconManager *_inst;
 }
 #pragma mark Private methods
 -(BeaconVO *)acquireBeaconVO:(NSNumber *)major minor:(NSNumber *)minor {
+    if(major == nil || minor == nil) return nil;
+    
     NSMutableDictionary *beacons = [_beacons objectForKey:major];
     BeaconVO *vo = [beacons objectForKey:minor];
     if(vo == nil) {
@@ -111,10 +114,19 @@ static BeaconManager *_inst;
 }
 - (void)locationManager:(CLLocationManager *)manager didDetermineState:(CLRegionState)state forRegion:(CLRegion *)region {
     CLBeaconRegion *b = (CLBeaconRegion *)region;
-    if(b.major != nil && b.minor != nil) {
-        BeaconVO *vo = [self acquireBeaconVO:b.major minor:b.minor];
-        vo.state = state;
+    
+    BeaconVO *vo = [self acquireBeaconVO:b.major minor:b.minor];
+    if(vo == nil) return;
+    
+    vo.state = state;
+    
+    if(vo.notifyEntryStateOnDisplay) {
+        UILocalNotification *notif = [[UILocalNotification alloc] init];
+        notif.alertBody = [NSString stringWithFormat:@"beacon major:%@ minor:%@", vo.major, vo.minor];
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notif];
     }
+    NSLog(@"ondisplay");
+    
 }
 - (void)locationManager:(CLLocationManager *)manager didStartMonitoringForRegion:(CLRegion *)region {
     [_manager requestStateForRegion:region];
@@ -124,10 +136,12 @@ static BeaconManager *_inst;
     
     for(CLBeacon *beacon in beacons) {
         BeaconVO *vo = [self acquireBeaconVO:beacon.major minor:beacon.minor];
-        [vo updateWithBeacon:beacon];
-        [vos addObject:vo];
+        if(vo != nil) {
+            [vo updateWithBeacon:beacon];
+            [vos addObject:vo];
+        }
     }
-
+    
     if([self.delegate respondsToSelector:@selector(didUpdateRanging:beacons:)] ) {
         [self.delegate didUpdateRanging:self beacons:vos];
     }
@@ -135,19 +149,37 @@ static BeaconManager *_inst;
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
     CLBeaconRegion *b = (CLBeaconRegion *)region;
     BeaconVO *vo = [self acquireBeaconVO:b.major minor:b.minor];
+    if(vo == nil) return;
+    
     vo.state = CLRegionStateInside;
     
     if([self.delegate respondsToSelector:@selector(didEnterBeaconRegion:beacon:)]) {
         [self.delegate didEnterBeaconRegion:self beacon:vo];
     }
+    
+    if(vo.notifyOnEntry) {
+        UILocalNotification *notif = [[UILocalNotification alloc] init];
+        notif.alertBody = [NSString stringWithFormat:@"enter major:%@ minor:%@", vo.major, vo.minor];
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notif];
+        
+        NSLog(@"enter notif");
+    }
 }
 - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
     CLBeaconRegion *b = (CLBeaconRegion *)region;
     BeaconVO *vo = [self acquireBeaconVO:b.major minor:b.minor];
+    if(vo == nil) return;
+    
     vo.state = CLRegionStateOutside;
     
     if([self.delegate respondsToSelector:@selector(didExitBeaconRegion:beacon:)]) {
         [self.delegate didExitBeaconRegion:self beacon:vo];
+    }
+    
+    if(vo.notifyOnExit) {
+        UILocalNotification *notif = [[UILocalNotification alloc] init];
+        notif.alertBody = [NSString stringWithFormat:@"exit major:%@ minor:%@", vo.major, vo.minor];
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notif];
     }
 }
 #pragma mark Public methods

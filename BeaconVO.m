@@ -39,6 +39,6 @@
     self.lastRangingUpdatedAt = [NSDate date];
     self.proximity = beacon.proximity;
     self.accuracy  = beacon.accuracy;
-    self.rssi      = beacon.accuracy;
+    self.rssi      = beacon.rssi;
 }
 @end

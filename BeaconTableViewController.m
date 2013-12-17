@@ -9,6 +9,7 @@
 #import "BeaconTableViewController.h"
 #import "BeaconManager.h"
 #import "BeaconCell.h"
+#import "BeaconDetailViewController.h"
 
 @interface BeaconTableViewController () {
     BeaconManager *_manager;
@@ -34,7 +35,9 @@
 {
     return [_manager.selectedBeacons count];
 }
-
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return  100;
+}
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = @"BeaconCell";
@@ -44,5 +47,16 @@
     cell.beacon = [_manager.selectedBeacons objectAtIndex:row];
     
     return cell;
+}
+#pragma mark Segue
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    if([segue.destinationViewController isKindOfClass:[BeaconDetailViewController class]]) {
+        NSIndexPath *path = [self.tableView indexPathForSelectedRow];
+        NSInteger row = [path indexAtPosition:1];
+        BeaconVO *beacon = [_manager.selectedBeacons objectAtIndex:row];
+        
+        BeaconDetailViewController *dst = (BeaconDetailViewController *)segue.destinationViewController;
+        dst.beacon = beacon;
+    }
 }
 @end

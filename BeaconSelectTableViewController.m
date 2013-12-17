@@ -51,16 +51,8 @@
 }
 
 #pragma mark BeaconManagerDelegate
--(void)didChangeStat:(BeaconManager *)sender {
-}
 -(void)didBeaconAdded:(BeaconManager *)sender beacon:(BeaconVO *)beacon {
     [self.tableView reloadData];
-}
--(void)didEnterBeaconRegion:(BeaconManager *)sender beacon:(BeaconVO *)beacon {
-}
--(void)didExitBeaconRegion:(BeaconManager *)sender  beacon:(BeaconVO *)beacon {
-}
--(void)didUpdateRanging:(BeaconManager *)sender beacons:(NSArray *)beacons {
 }
 
 #pragma mark - Table view data source
@@ -101,7 +93,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *detectingCellIdentifier = @"detectingLabelCell";
-    static NSString *beaconCellIdentifier = @"SimpleBeaconCell";
+    static NSString *beaconCellIdentifier = @"BeaconCell";
 
     NSInteger cnt = [[_manager majors] count];
     if( cnt == 0 ) {
